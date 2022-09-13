@@ -4,10 +4,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.List;
 
 @SpringBootApplication
@@ -18,7 +20,7 @@ public class SpringBootMongodbAmigoscodeApplication {
 	}
 
 	@Bean
-	CommandLineRunner runner(StudentRepository repository) {
+	CommandLineRunner runner(StudentRepository repository, MongoTemplate mongoTemplate) {
 		return args -> {
 			Address address = new Address(
 					"USA",
@@ -26,10 +28,12 @@ public class SpringBootMongodbAmigoscodeApplication {
 					"55478956"
 			);
 
+			String email = "parker@email.com";
+
 			Student student =  new Student(
 					"Peter",
 					"Parker",
-					"parker@email.com",
+					email,
 					Gender.MALE,
 					address,
 					List.of("Computer Science", "Mathematics"),
@@ -37,7 +41,14 @@ public class SpringBootMongodbAmigoscodeApplication {
 					LocalDateTime.now()
 			);
 
-			repository.insert(student);
+			repository.findByEmail(email)
+					.ifPresentOrElse(
+							s -> System.out.println(s + " already exists"),
+							() -> {
+								System.out.println("Inserting student " + student);
+								repository.insert(student);
+							}
+					);
 		};
 	}
 }
